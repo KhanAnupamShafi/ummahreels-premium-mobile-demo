@@ -1,4 +1,4 @@
 {
   "cleanUrls": true,
-  "rewrites": [{ "source": "/", "destination": "/ummahreels-premium-app.html" }]
+  "rewrites": [{ "source": "/", "destination": "/ummahreels-theme-studio.html" }]
 }
