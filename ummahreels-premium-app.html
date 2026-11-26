@@ -1,0 +1,965 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UmmahReels Premium · mobile app prototype</title>
+<style>
+  /* ─── tokens — bound from brand-spec.md (read off logo.png + asset-4) ─── */
+  :root{
+    --bg:      oklch(0.188 0.006 200);  /* graphite onyx — never black */
+    --surface: oklch(0.242 0.009 195);
+    --fg:      oklch(0.953 0.010 88);
+    --muted:   oklch(0.742 0.012 172);
+    --border:  oklch(0.318 0.012 190);
+    --accent:  oklch(0.806 0.137 82);   /* brand gold #ecb64a */
+    --emerald: oklch(0.313 0.056 173);  /* brand emerald #073a2e */
+    --on-accent: oklch(0.185 0.035 173);
+
+    --accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
+    --fg-soft:     color-mix(in oklch, var(--fg) 7%, transparent);
+    --ink:         color-mix(in oklch, var(--emerald) 30%, black);
+
+    --font-display:'Iowan Old Style','Palatino Linotype','Book Antiqua',Palatino,Charter,Georgia,serif;
+    --font-body:   -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+    --font-mono:   ui-monospace,'JetBrains Mono','SF Mono',Menlo,monospace;
+
+    --fs-h1: clamp(40px,5vw,64px);
+    --fs-h2: clamp(28px,3.4vw,42px);
+    --fs-h3: 21px;
+    --fs-lead: 18px;
+    --fs-body: 16px;
+    --fs-meta: 13px;
+
+    --gap-sm:12px; --gap-md:20px; --gap-lg:32px; --gap-xl:56px; --gap-2xl:96px;
+    --container:1180px; --gutter:32px;
+    --radius:10px; --radius-lg:16px;
+  }
+
+  /* ─── reset & base ─── */
+  *,*::before,*::after{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:var(--font-body); font-size:var(--fs-body); line-height:1.55;
+    text-rendering:optimizeLegibility; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img,svg{display:block; max-width:100%;}
+  a{color:inherit; text-decoration:none;}
+  button{font:inherit; cursor:pointer; background:none; border:0; color:inherit;}
+  p{text-wrap:pretty;}
+  h1,h2,h3,h4{text-wrap:balance;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px;}
+
+  /* ─── layout primitives ─── */
+  .container{max-width:var(--container); margin-inline:auto; padding-inline:var(--gutter);}
+  .section{padding-block:clamp(48px,7vw,var(--gap-2xl)); position:relative;}
+  .section + .section{border-top:1px solid var(--border);}
+  .stack{display:flex; flex-direction:column;}
+  .stack > * + *{margin-top:var(--gap-md);}
+  .row{display:flex; align-items:center; gap:var(--gap-md);}
+  .row-between{display:flex; align-items:center; justify-content:space-between; gap:var(--gap-md);}
+  .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--gap-lg);}
+  @media (max-width:920px){ .grid-3{grid-template-columns:1fr;} }
+
+  /* ─── type ─── */
+  h1{font-family:var(--font-display); font-size:var(--fs-h1); line-height:1.04; letter-spacing:-0.02em; margin:0;}
+  h2{font-family:var(--font-display); font-size:var(--fs-h2); line-height:1.1; letter-spacing:-0.015em; margin:0;}
+  h3{font-size:var(--fs-h3); font-weight:600; line-height:1.3; margin:0;}
+  .lead{font-size:var(--fs-lead); line-height:1.6; color:var(--muted); max-width:52ch; margin:0;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+           color:var(--accent); margin:0 0 var(--gap-md);}
+  .meta{font-family:var(--font-mono); font-size:var(--fs-meta); color:var(--muted);}
+  .num{font-family:var(--font-mono); font-variant-numeric:tabular-nums;}
+
+  /* ─── chrome ─── */
+  .topnav{position:sticky; top:0; z-index:20;
+    background:color-mix(in oklch, var(--bg) 88%, transparent);
+    backdrop-filter:blur(14px); border-bottom:1px solid var(--border);}
+  .topnav-inner{display:flex; align-items:center; justify-content:space-between; padding-block:13px; gap:var(--gap-md);}
+  .brandmark{display:flex; align-items:center; gap:11px;}
+  .brandmark img{width:32px; height:32px; border-radius:9px;}
+  .brandmark .wordmark{font-family:var(--font-display); font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+  .pagefoot{padding-block:var(--gap-xl); color:var(--muted); font-size:13px; border-top:1px solid var(--border);}
+  .pagefoot .row-between{flex-wrap:wrap; gap:var(--gap-md); align-items:flex-start;}
+
+  /* ─── buttons (page scale) ─── */
+  /* ─── feature cell ─── */
+  .feature .feature-mark{width:38px; height:38px; display:grid; place-items:center;
+    border:1px solid var(--border); border-radius:11px; color:var(--fg); margin-bottom:var(--gap-md);}
+  .feature .feature-mark svg{width:19px; height:19px;}
+  .feature h3{margin-bottom:8px;}
+  .feature p{margin:0; color:var(--muted); font-size:15px;}
+
+  /* ═══════════════════════════════════════════════════════════════
+     STAGE — cinematic field behind the device
+     ═══════════════════════════════════════════════════════════════ */
+  .stage{overflow:hidden; padding-block:clamp(44px,5vw,76px);}
+  .stage-field{position:absolute; inset:0; pointer-events:none;}
+  .stage-field img{width:100%; height:100%; object-fit:cover; opacity:0.055;}
+  .stage-field::after{content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(62% 52% at 72% 42%, color-mix(in oklch, var(--emerald) 55%, transparent), transparent 70%),
+      linear-gradient(180deg, transparent 55%, var(--bg) 100%);}
+  .stage-grid{position:relative; display:grid; grid-template-columns:1fr 430px; gap:var(--gap-2xl); align-items:center;}
+  @media (max-width:1040px){
+    .stage-grid{grid-template-columns:1fr; gap:var(--gap-xl); justify-items:center; text-align:center;}
+    .stage-copy .lead{margin-inline:auto;}
+    .specs{margin-inline:auto;}
+  }
+  .stage-copy h1{margin-bottom:var(--gap-md);}
+  .specs{margin:36px 0 0; max-width:420px; border-top:1px solid var(--border);}
+  .specs div{display:flex; justify-content:space-between; gap:var(--gap-md);
+    padding:11px 0; border-bottom:1px solid var(--border);}
+  .specs dt{font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--muted);}
+  .specs dd{margin:0; font-size:14px; text-align:right;}
+
+  /* ═══════════ DEVICE ═══════════ */
+  .device-wrap{display:flex; justify-content:center;}
+  .device{
+    width:412px; padding:11px; border-radius:58px;
+    background:linear-gradient(160deg,
+      color-mix(in oklch, var(--bg) 46%, black),
+      color-mix(in oklch, var(--bg) 78%, black));
+    border:1px solid color-mix(in oklch, var(--accent) 24%, transparent);
+    box-shadow:0 60px 120px -40px black, 0 0 0 1px color-mix(in oklch, black 60%, transparent) inset;
+  }
+  .device-screen{
+    position:relative; width:390px; height:844px; border-radius:47px; overflow:hidden;
+    background:var(--ink); isolation:isolate;
+  }
+
+  .statusbar{position:absolute; top:0; left:0; right:0; height:54px; z-index:6;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 30px; pointer-events:none; color:var(--fg);
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.02em;
+    background:linear-gradient(180deg, color-mix(in oklch, black 58%, transparent), transparent);}
+  .statusbar .icons{display:flex; gap:6px; align-items:center;}
+  .statusbar svg{width:17px; height:17px;}
+  .island{position:absolute; top:13px; left:50%; transform:translateX(-50%);
+    width:108px; height:30px; border-radius:16px; background:black; z-index:7;}
+
+  .screens{position:absolute; inset:0;}
+  .screen{position:absolute; inset:0; overflow-y:auto; overscroll-behavior:contain;
+    scroll-behavior:smooth; scrollbar-width:none; opacity:0; visibility:hidden;
+    transition:opacity .3s ease; padding-bottom:104px;}
+  .screen::-webkit-scrollbar{width:0; height:0;}
+  .screen.is-active{opacity:1; visibility:visible;}
+
+  /* tab bar */
+  .tabbar{position:absolute; left:0; right:0; bottom:0; z-index:8; height:84px;
+    display:grid; grid-template-columns:repeat(4,1fr); align-items:start;
+    padding-top:9px;
+    background:color-mix(in oklch, var(--ink) 86%, transparent);
+    backdrop-filter:blur(20px);
+    border-top:1px solid color-mix(in oklch, var(--fg) 12%, transparent);}
+  .tab{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    min-height:48px; color:var(--muted); transition:color .18s ease;}
+  .tab svg{width:23px; height:23px; stroke-width:1.5;}
+  .tab span{font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.1em; text-transform:uppercase;}
+  .tab:hover{color:color-mix(in oklch, var(--fg) 82%, var(--muted));}
+  .tab[aria-selected="true"]{color:var(--fg);}
+  .tab[aria-selected="true"] svg{stroke-width:1.9;}
+
+  /* in-app shared pieces */
+  .app-pad{padding-inline:18px;}
+  .app-head{padding:66px 18px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;}
+  .app-head .brand{display:flex; align-items:center; gap:9px;}
+  .app-head .brand img{width:28px; height:28px; border-radius:8px;}
+  .app-head .brand b{font-family:var(--font-display); font-size:17px; font-weight:600; letter-spacing:-0.01em;}
+  .app-head .acts{display:flex; gap:4px;}
+  .icon-btn{width:40px; height:40px; display:grid; place-items:center; border-radius:12px;
+    color:var(--fg); transition:background .16s ease;}
+  .icon-btn svg{width:20px; height:20px; stroke-width:1.6;}
+  .icon-btn:hover{background:color-mix(in oklch, var(--fg) 12%, transparent);}
+
+  .sec-head{display:flex; align-items:baseline; justify-content:space-between;
+    padding:26px 18px 12px; gap:12px;}
+  .sec-head h3{font-family:var(--font-display); font-size:19px; font-weight:600; letter-spacing:-0.01em;}
+  .sec-head a{font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--muted); transition:color .16s ease;}
+  .sec-head a:hover{color:var(--fg);}
+
+  .rail{display:flex; gap:11px; overflow-x:auto; padding:2px 18px 6px;
+    scroll-snap-type:x proximity; scrollbar-width:none;}
+  .rail::-webkit-scrollbar{height:0;}
+  .rail > *{flex:0 0 auto; scroll-snap-align:start;}
+
+  .still{display:block; border-radius:13px; overflow:hidden; position:relative;
+    background:color-mix(in oklch, var(--emerald) 34%, black);
+    border:1px solid color-mix(in oklch, var(--fg) 9%, transparent);}
+  .still img{display:block; width:auto; height:100%;}
+  .still.land img{height:106px;}
+  .still.port img{height:182px;}
+  .still:hover{border-color:color-mix(in oklch, var(--fg) 26%, transparent);}
+
+  .card-title{margin:8px 0 0; font-size:12.5px; line-height:1.35; color:var(--fg); max-width:19ch;}
+  .card-sub{margin:2px 0 0; font-family:var(--font-mono); font-size:10px; color:var(--muted); letter-spacing:0.04em;}
+  .progress{height:3px; border-radius:2px; background:color-mix(in oklch, var(--fg) 20%, transparent);
+    margin-top:7px; overflow:hidden;}
+  .progress i{display:block; height:100%; background:var(--fg); border-radius:2px;}
+
+  /* hero */
+  .hero-still{margin:0 18px; border-radius:16px; overflow:hidden; position:relative;
+    border:1px solid color-mix(in oklch, var(--fg) 10%, transparent);}
+  .hero-still img{width:100%; height:auto;}
+  .hero-meta{padding:14px 18px 0;}
+  .hero-meta h2{font-size:26px; line-height:1.08;}
+  .hero-cta{display:flex; gap:9px; margin-top:14px;}
+  .app-btn{display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    min-height:44px; padding:0 18px; border-radius:11px; font-size:14px; font-weight:600;
+    border:1px solid transparent; transition:background .16s ease, border-color .16s ease, color .16s ease;}
+  .app-btn svg{width:17px; height:17px;}
+  .btn-ivory{background:var(--fg); color:var(--ink); border-color:var(--fg);}
+  .btn-ivory:hover{background:color-mix(in oklch, var(--fg) 86%, var(--accent)); color:var(--ink);}
+  .btn-line{background:color-mix(in oklch, var(--fg) 10%, transparent); color:var(--fg);
+    border-color:color-mix(in oklch, var(--fg) 26%, transparent);}
+  .btn-line:hover{background:color-mix(in oklch, var(--fg) 20%, transparent); border-color:var(--fg);}
+  .btn-gold{background:var(--accent); color:var(--on-accent); border-color:var(--accent);
+    font-weight:700; letter-spacing:0.01em;}
+  .btn-gold:hover{background:color-mix(in oklch, var(--accent) 84%, white);
+    border-color:color-mix(in oklch, var(--accent) 84%, white); color:var(--on-accent);}
+  .btn-goldline{background:transparent; color:var(--accent);
+    border-color:color-mix(in oklch, var(--accent) 52%, transparent);}
+  .btn-goldline:hover{background:var(--accent-soft); border-color:var(--accent); color:var(--accent);}
+
+  /* banner strip with corner-anchored overlay */
+  .banner{position:relative; margin:22px 18px 0; border-radius:14px; overflow:hidden;
+    border:1px solid color-mix(in oklch, var(--fg) 10%, transparent);}
+  .banner img{width:100%; height:auto;}
+  .banner .badge{position:absolute; left:12px; bottom:12px;
+    background:color-mix(in oklch, var(--ink) 78%, transparent); backdrop-filter:blur(10px);
+    border:1px solid color-mix(in oklch, var(--fg) 18%, transparent);
+    border-radius:9px; padding:7px 11px;
+    box-shadow:0 8px 24px -10px black;}
+  .banner .badge b{display:block; font-family:var(--font-display); font-size:14px; font-weight:600;}
+  .banner .badge span{display:block; font-family:var(--font-mono); font-size:9.5px;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-top:1px;}
+
+  /* upsell card */
+  .upsell{margin:26px 18px 0; border-radius:16px; padding:18px;
+    background:linear-gradient(145deg, color-mix(in oklch, var(--emerald) 86%, black),
+                                       color-mix(in oklch, var(--emerald) 40%, black));
+    border:1px solid color-mix(in oklch, var(--accent) 22%, transparent);}
+  .upsell h4{margin:0; font-family:var(--font-display); font-size:18px; font-weight:600; letter-spacing:-0.01em;}
+  .upsell p{margin:6px 0 14px; font-size:13px; color:color-mix(in oklch, var(--fg) 72%, var(--muted)); max-width:30ch;}
+
+  /* ═══════════ REELS ═══════════ */
+  #screen-reels{padding-bottom:0; scroll-snap-type:y mandatory;}
+  .reel{position:relative; height:100%; scroll-snap-align:start; scroll-snap-stop:always;}
+  .reel-media{position:absolute; inset:0; display:grid; place-items:center;
+    background:radial-gradient(70% 55% at 50% 42%,
+      color-mix(in oklch, var(--emerald) 44%, black), var(--ink));}
+  .reel-media img{max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;}
+  .reel-scrim{position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(180deg,
+      color-mix(in oklch, black 52%, transparent) 0%, transparent 20%,
+      transparent 46%, color-mix(in oklch, black 78%, transparent) 100%);}
+  .reel-seg{position:absolute; top:60px; left:18px; right:18px; z-index:4; display:flex; gap:4px;}
+  .reel-seg i{flex:1; height:2.5px; border-radius:2px;
+    background:color-mix(in oklch, var(--fg) 28%, transparent);}
+  .reel-seg i.on{background:var(--accent);}
+  .reel-actions{position:absolute; right:10px; bottom:186px; z-index:4;
+    display:flex; flex-direction:column; gap:6px;}
+  .act{width:48px; height:48px; display:grid; place-items:center; border-radius:14px;
+    color:var(--fg); transition:background .16s ease, color .16s ease;}
+  .act svg{width:25px; height:25px; stroke-width:1.5; fill:none;}
+  .act:hover{background:color-mix(in oklch, var(--fg) 16%, transparent);}
+  .act[aria-pressed="true"]{color:var(--accent);}
+  .act[aria-pressed="true"] svg{fill:var(--accent); stroke:var(--accent);}
+  .reel-copy{position:absolute; left:18px; right:72px; bottom:104px; z-index:4;}
+  .reel-by{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
+  .reel-by img{width:34px; height:34px; border-radius:50%; object-fit:cover;
+    border:1px solid color-mix(in oklch, var(--fg) 34%, transparent);}
+  .reel-by b{font-size:13.5px; font-weight:600;}
+  .reel-by span{font-family:var(--font-mono); font-size:10px; color:var(--muted); display:block; letter-spacing:0.05em;}
+  .reel-copy h4{margin:0; font-family:var(--font-display); font-size:21px; font-weight:600;
+    line-height:1.18; letter-spacing:-0.01em;}
+  .reel-copy p{margin:6px 0 0; font-size:13px; line-height:1.45;
+    color:color-mix(in oklch, var(--fg) 76%, var(--muted));}
+  .reel-tags{display:flex; gap:6px; margin-top:11px; flex-wrap:wrap;}
+  .reel-tags span{font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em;
+    padding:3px 8px; border-radius:999px; color:var(--fg);
+    background:color-mix(in oklch, var(--fg) 13%, transparent);}
+
+  /* ═══════════ EXPLORE ═══════════ */
+  .searchbar{margin:0 18px; display:flex; align-items:center; gap:10px;
+    background:color-mix(in oklch, var(--fg) 9%, transparent);
+    border:1px solid color-mix(in oklch, var(--fg) 14%, transparent);
+    border-radius:13px; padding:0 13px; height:46px;}
+  .searchbar svg{width:18px; height:18px; stroke-width:1.7; color:var(--muted); flex:0 0 auto;}
+  .searchbar input{flex:1; background:none; border:0; color:var(--fg); font:inherit; font-size:14px;
+    min-width:0; height:100%;}
+  .searchbar input::placeholder{color:var(--muted);}
+  .searchbar:focus-within{border-color:var(--accent); outline:2px solid var(--accent-soft); outline-offset:1px;}
+  .searchbar input:focus-visible{outline:none;}
+  .chips{display:flex; gap:7px; overflow-x:auto; padding:14px 18px 4px; scrollbar-width:none;}
+  .chips::-webkit-scrollbar{height:0;}
+  .chip{flex:0 0 auto; padding:8px 14px; min-height:36px; border-radius:999px;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--muted); border:1px solid color-mix(in oklch, var(--fg) 16%, transparent);
+    transition:color .16s ease, background .16s ease, border-color .16s ease;}
+  .chip:hover{color:var(--fg); border-color:color-mix(in oklch, var(--fg) 40%, transparent);}
+  .chip[aria-pressed="true"]{background:var(--fg); color:var(--ink); border-color:var(--fg);}
+  .ex-grid{column-count:2; column-gap:11px; padding:14px 18px 0;}
+  .ex-tile{break-inside:avoid; margin:0 0 11px; display:block; border-radius:13px; overflow:hidden;
+    position:relative; border:1px solid color-mix(in oklch, var(--fg) 9%, transparent);
+    background:color-mix(in oklch, var(--emerald) 34%, black);}
+  .ex-tile img{width:100%; height:auto;}
+  .ex-tile figcaption{position:absolute; left:0; right:0; bottom:0; padding:22px 11px 10px;
+    background:linear-gradient(180deg, transparent, color-mix(in oklch, black 84%, transparent));}
+  .ex-tile b{display:block; font-family:var(--font-display); font-size:14px; font-weight:600; line-height:1.2;}
+  .ex-tile span{display:block; font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.08em;
+    text-transform:uppercase; color:color-mix(in oklch, var(--fg) 70%, var(--muted)); margin-top:3px;}
+  .ex-tile:hover{border-color:color-mix(in oklch, var(--fg) 30%, transparent);}
+  .ex-empty{display:none; padding:40px 18px; text-align:center; color:var(--muted); font-size:13px;}
+
+  /* ═══════════ PREMIUM ═══════════ */
+  .crest{position:relative;}
+  .crest > img{width:100%; height:auto;}
+  .crest-scrim{position:absolute; inset:0;
+    background:radial-gradient(54% 54% at 50% 48%, color-mix(in oklch, black 58%, transparent), transparent 72%),
+               linear-gradient(180deg, color-mix(in oklch, black 46%, transparent) 0 18%, transparent 46%, var(--ink) 100%);}
+  .crest-copy{position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:9px; text-align:center; padding-top:22px;}
+  .crest-copy img{width:58px; height:58px; border-radius:17px;
+    border:1px solid color-mix(in oklch, var(--fg) 30%, transparent);
+    box-shadow:0 14px 34px -14px black;}
+  .crest-copy b{font-family:var(--font-display); font-size:25px; font-weight:600; letter-spacing:-0.015em;}
+  .crest-copy span{font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.34em;
+    text-transform:uppercase; color:color-mix(in oklch, var(--fg) 78%, var(--muted)); padding-left:0.34em;}
+
+  .pitch{padding:20px 18px 0; text-align:center;}
+  .pitch h2{font-size:27px; line-height:1.1;}
+  .pitch p{margin:9px auto 0; font-size:13.5px; color:var(--muted); max-width:30ch; line-height:1.5;}
+
+  .segmented{display:grid; grid-template-columns:1fr 1fr; gap:4px; margin:20px 18px 0;
+    padding:4px; border-radius:13px;
+    background:color-mix(in oklch, var(--fg) 8%, transparent);
+    border:1px solid color-mix(in oklch, var(--fg) 12%, transparent);}
+  .seg{min-height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:6px;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.09em; text-transform:uppercase;
+    color:var(--muted); transition:background .18s ease, color .18s ease;}
+  .seg:hover{color:var(--fg);}
+  .seg[aria-selected="true"]{background:var(--fg); color:var(--ink); font-weight:600;}
+  .seg em{font-style:normal; font-size:9.5px; opacity:0.82;}
+
+  .tiers{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 18px 0;}
+  .tier{position:relative; text-align:left; padding:15px 14px 16px; border-radius:15px;
+    background:color-mix(in oklch, var(--fg) 6%, transparent);
+    border:1px solid color-mix(in oklch, var(--fg) 14%, transparent);
+    transition:border-color .18s ease, background .18s ease;}
+  .tier:hover{background:color-mix(in oklch, var(--fg) 11%, transparent);
+    border-color:color-mix(in oklch, var(--fg) 34%, transparent);}
+  .tier[aria-pressed="true"]{border-color:var(--accent);
+    background:color-mix(in oklch, var(--accent) 11%, transparent);}
+  .tier h4{margin:0; font-family:var(--font-display); font-size:16px; font-weight:600;}
+  .tier .who{margin:2px 0 11px; font-family:var(--font-mono); font-size:9.5px;
+    letter-spacing:0.07em; text-transform:uppercase; color:var(--muted);}
+  .tier .price{font-family:var(--font-mono); font-size:22px; font-weight:600;
+    font-variant-numeric:tabular-nums; letter-spacing:-0.02em; line-height:1;}
+  .tier .per{font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-top:5px; display:block;}
+  .tier .mark{position:absolute; top:13px; right:13px; width:17px; height:17px; border-radius:50%;
+    border:1.5px solid color-mix(in oklch, var(--fg) 30%, transparent); display:grid; place-items:center;}
+  .tier .mark svg{width:11px; height:11px; stroke-width:2.6; color:var(--on-accent); opacity:0;}
+  .tier[aria-pressed="true"] .mark{background:var(--accent); border-color:var(--accent);}
+  .tier[aria-pressed="true"] .mark svg{opacity:1;}
+  .tier .save{display:inline-block; margin-top:9px; font-family:var(--font-mono); font-size:9px;
+    letter-spacing:0.08em; text-transform:uppercase; color:var(--fg);
+    background:color-mix(in oklch, var(--fg) 14%, transparent); border-radius:999px; padding:2.5px 7px;}
+
+  .benefits{margin:22px 18px 0; border-top:1px solid color-mix(in oklch, var(--fg) 12%, transparent);}
+  .benefit{display:flex; gap:12px; align-items:flex-start; padding:13px 0;
+    border-bottom:1px solid color-mix(in oklch, var(--fg) 12%, transparent);}
+  .benefit svg{width:17px; height:17px; stroke-width:2; color:var(--fg); flex:0 0 auto; margin-top:2px;}
+  .benefit b{display:block; font-size:14px; font-weight:600;}
+  .benefit span{display:block; font-size:12.5px; color:var(--muted); line-height:1.45; margin-top:2px;}
+
+  #screen-premium{padding-bottom:0;}
+  .paybar{position:sticky; bottom:0; z-index:5; margin-top:20px;
+    padding:16px 18px 94px;
+    background:linear-gradient(180deg,
+      transparent 0,
+      color-mix(in oklch, var(--ink) 86%, transparent) 16%,
+      var(--ink) 42%);
+    backdrop-filter:blur(10px);}
+  .paybar .btn-gold{width:100%; min-height:52px; font-size:15.5px; border-radius:14px;
+    box-shadow:0 14px 34px -16px var(--accent);}
+  .paybar .after{margin:10px 0 0; text-align:center; font-family:var(--font-mono);
+    font-size:11px; color:var(--muted); letter-spacing:0.02em;}
+  .restore{display:block; width:100%; min-height:44px; margin:10px 0 0;
+    font-size:13px; color:var(--muted); transition:color .16s ease;}
+  .restore:hover{color:var(--fg); text-decoration:underline;}
+  .fineprint{margin:4px 18px 0; font-family:var(--font-mono); font-size:10px; line-height:1.6;
+    color:color-mix(in oklch, var(--muted) 76%, var(--bg)); text-align:center;}
+
+  @media (max-width:560px){
+    :root{--gutter:20px;}
+    .device-wrap{height:700px;}
+    .device{transform:scale(0.775); transform-origin:top center;}
+    .topnav .meta{display:none;}
+    .pagefoot .meta{text-align:left;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topnav" data-od-id="topnav">
+  <div class="container topnav-inner">
+    <div class="brandmark">
+      <img src="logo.png" width="1254" height="1254" alt="UmmahReels app mark — gold minaret and film strip on emerald" />
+      <span class="wordmark">UmmahReels</span>
+    </div>
+    <span class="meta">FAITH · STORIES · IMPACT</span>
+  </div>
+</header>
+
+<main id="content">
+
+  <!-- ═══════════════ STAGE ═══════════════ -->
+  <section class="section stage" data-od-id="stage">
+    <div class="stage-field" aria-hidden="true">
+      <img src="asset-4.jpeg" width="2048" height="1226" alt="" />
+    </div>
+    <div class="container stage-grid">
+
+      <div class="stage-copy">
+        <p class="eyebrow">Islamic OTT · Reels · Mobile</p>
+        <h1>A cinema for the ummah, in your pocket.</h1>
+        <p class="lead">Long-form documentary and a short-form Reels feed sit behind one gold key. This is the working prototype — tap the tab bar, flick the Reels, switch the billing period.</p>
+        <dl class="specs">
+          <div><dt>Device</dt><dd class="num">iPhone · 390 × 844</dd></div>
+          <div><dt>Screens</dt><dd>Premium · Reels · Home · Explore</dd></div>
+          <div><dt>Opens on</dt><dd>Premium paywall</dd></div>
+        </dl>
+      </div>
+
+      <div class="device-wrap" data-od-id="device">
+        <div class="device">
+          <div class="device-screen">
+            <div class="island" aria-hidden="true"></div>
+            <div class="statusbar" aria-hidden="true">
+              <span class="num">9:41</span>
+              <span class="icons">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 18h2M8.5 18v-4M14 18V9.5M19.5 18V5"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2.5 9.5a14 14 0 0 1 19 0M6 13.3a9 9 0 0 1 12 0"/><circle cx="12" cy="17.6" r="1.2" fill="currentColor" stroke="none"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="8" width="16" height="9" rx="2.6"/><path d="M21 11.5v2"/><rect x="4.5" y="10" width="11" height="5" rx="1.2" fill="currentColor" stroke="none"/></svg>
+              </span>
+            </div>
+
+            <div class="screens">
+
+              <!-- ───────── PREMIUM ───────── -->
+              <div class="screen" id="screen-premium" role="tabpanel" aria-label="Premium" data-od-id="screen-premium">
+                <div class="crest">
+                  <img src="asset-7.jpeg" width="1500" height="1060" alt="A ring of gold light scattered across a deep emerald field" />
+                  <div class="crest-scrim" aria-hidden="true"></div>
+                  <div class="crest-copy">
+                    <img src="logo.png" width="1254" height="1254" alt="UmmahReels app mark" />
+                    <b>UmmahReels</b>
+                    <span>Premium</span>
+                  </div>
+                </div>
+
+                <div class="pitch">
+                  <h2>Every story, uninterrupted.</h2>
+                  <p>Originals a fortnight early, downloads for the journey, and not one ad break between them.</p>
+                </div>
+
+                <div class="segmented" role="tablist" aria-label="Billing period" data-od-id="billing-toggle">
+                  <button class="seg" role="tab" aria-selected="false" data-period="monthly">Monthly</button>
+                  <button class="seg" role="tab" aria-selected="true" data-period="yearly">Yearly <em>−30%</em></button>
+                </div>
+
+                <div class="tiers" data-od-id="plan-tiers">
+                  <button class="tier" aria-pressed="true" data-tier="single"
+                          data-m-price="$5.99" data-m-per="per month" data-m-after="$5.99 a month after the trial"
+                          data-y-price="$49.99" data-y-per="per year · $4.17 a month" data-y-after="$49.99 a year after the trial">
+                    <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+                    <h4>Ummah</h4>
+                    <p class="who">One viewer</p>
+                    <div class="price num" data-slot="price">$49.99</div>
+                    <span class="per" data-slot="per">per year · $4.17 a month</span>
+                    <span class="save" data-slot="save">Save $21.89</span>
+                  </button>
+                  <button class="tier" aria-pressed="false" data-tier="family"
+                          data-m-price="$9.99" data-m-per="per month" data-m-after="$9.99 a month after the trial"
+                          data-y-price="$83.99" data-y-per="per year · $7.00 a month" data-y-after="$83.99 a year after the trial">
+                    <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+                    <h4>Family</h4>
+                    <p class="who">Four profiles</p>
+                    <div class="price num" data-slot="price">$83.99</div>
+                    <span class="per" data-slot="per">per year · $7.00 a month</span>
+                    <span class="save" data-slot="save">Save $35.89</span>
+                  </button>
+                </div>
+
+                <div class="benefits">
+                  <div class="benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    <div><b>Cinema-grade 4K</b><span>Every Original mastered for the large screen, with spatial audio on supported devices.</span></div>
+                  </div>
+                  <div class="benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    <div><b>Download for the journey</b><span>Keep any title offline — made for long flights, commutes and Jumu'ah travel.</span></div>
+                  </div>
+                  <div class="benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    <div><b>No ad breaks, anywhere</b><span>Uninterrupted in the series player and in the Reels feed alike.</span></div>
+                  </div>
+                  <div class="benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    <div><b>Originals two weeks early</b><span>New UmmahReels Originals open to Premium before general release.</span></div>
+                  </div>
+                  <div class="benefit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+                    <div><b>Five subtitle tracks</b><span>Arabic, English, Bangla, Urdu and Turkish on the whole catalogue.</span></div>
+                  </div>
+                </div>
+
+                <button class="restore">Restore a purchase</button>
+
+                <p class="fineprint">Sample pricing shown for layout review.<br />Renews automatically until cancelled.</p>
+
+                <div class="paybar">
+                  <button class="app-btn btn-gold" data-od-id="premium-cta">Start 7-day free trial</button>
+                  <p class="after" data-slot="after">$49.99 a year after the trial · cancel anytime</p>
+                </div>
+              </div>
+
+              <!-- ───────── REELS ───────── -->
+              <div class="screen" id="screen-reels" role="tabpanel" aria-label="Reels" data-od-id="screen-reels">
+
+                <article class="reel" data-od-id="reel-courtyard">
+                  <div class="reel-media"><img src="asset-3.jpeg" width="1200" height="1600" alt="Sunrise through the carved arches of a mosque courtyard, reflected on polished stone" /></div>
+                  <div class="reel-scrim" aria-hidden="true"></div>
+                  <div class="reel-seg" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+                  <div class="reel-actions">
+                    <button class="act" aria-pressed="false" aria-label="Like this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 20.3S3.9 15.4 2.4 10.8A5 5 0 0 1 12 7.1a5 5 0 0 1 9.6 3.7C20.1 15.4 12 20.3 12 20.3Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Comments">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M21 12a8.4 8.4 0 0 1-8.5 8.4H4l2.3-2.8A8.4 8.4 0 1 1 21 12Z"/></svg>
+                    </button>
+                    <button class="act" aria-pressed="false" aria-label="Save this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M6.5 3.5h11v17l-5.5-4.2-5.5 4.2Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Share">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15.5V3.8"/><path d="m7.8 8 4.2-4.2L16.2 8"/><path d="M5 13.5v6.7h14v-6.7"/></svg>
+                    </button>
+                  </div>
+                  <div class="reel-copy">
+                    <div class="reel-by">
+                      <img src="asset-4.jpeg" width="2048" height="1226" alt="" />
+                      <div><b>Masjid Stories</b><span>Follows you · 0:48</span></div>
+                    </div>
+                    <h4>The courtyard at Fajr</h4>
+                    <p>Four minutes before the adhan, the first light lands on the mosaic and the whole floor turns to water.</p>
+                    <div class="reel-tags"><span>#fajr</span><span>#architecture</span><span>#stillness</span></div>
+                  </div>
+                </article>
+
+                <article class="reel" data-od-id="reel-crescent">
+                  <div class="reel-media"><img src="asset-8.jpeg" width="857" height="1200" alt="A crescent drawn in points of golden light above a dark sea at night" /></div>
+                  <div class="reel-scrim" aria-hidden="true"></div>
+                  <div class="reel-seg" aria-hidden="true"><i></i><i class="on"></i><i></i></div>
+                  <div class="reel-actions">
+                    <button class="act" aria-pressed="false" aria-label="Like this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 20.3S3.9 15.4 2.4 10.8A5 5 0 0 1 12 7.1a5 5 0 0 1 9.6 3.7C20.1 15.4 12 20.3 12 20.3Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Comments">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M21 12a8.4 8.4 0 0 1-8.5 8.4H4l2.3-2.8A8.4 8.4 0 1 1 21 12Z"/></svg>
+                    </button>
+                    <button class="act" aria-pressed="false" aria-label="Save this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M6.5 3.5h11v17l-5.5-4.2-5.5 4.2Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Share">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15.5V3.8"/><path d="m7.8 8 4.2-4.2L16.2 8"/><path d="M5 13.5v6.7h14v-6.7"/></svg>
+                    </button>
+                  </div>
+                  <div class="reel-copy">
+                    <div class="reel-by">
+                      <img src="asset-4.jpeg" width="2048" height="1226" alt="" />
+                      <div><b>Nur Studio</b><span>New · 1:06</span></div>
+                    </div>
+                    <h4>How we read the new moon</h4>
+                    <p>Why the month begins with a sighting and not a calculation — explained from a beach in Chattogram.</p>
+                    <div class="reel-tags"><span>#hilal</span><span>#ramadan</span><span>#explainer</span></div>
+                  </div>
+                </article>
+
+                <article class="reel" data-od-id="reel-road">
+                  <div class="reel-media"><img src="asset-1.jpeg" width="1024" height="1024" alt="A rider in white approaches a desert fortress at dusk, painted in oils" /></div>
+                  <div class="reel-scrim" aria-hidden="true"></div>
+                  <div class="reel-seg" aria-hidden="true"><i></i><i></i><i class="on"></i></div>
+                  <div class="reel-actions">
+                    <button class="act" aria-pressed="false" aria-label="Like this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 20.3S3.9 15.4 2.4 10.8A5 5 0 0 1 12 7.1a5 5 0 0 1 9.6 3.7C20.1 15.4 12 20.3 12 20.3Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Comments">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M21 12a8.4 8.4 0 0 1-8.5 8.4H4l2.3-2.8A8.4 8.4 0 1 1 21 12Z"/></svg>
+                    </button>
+                    <button class="act" aria-pressed="false" aria-label="Save this reel">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M6.5 3.5h11v17l-5.5-4.2-5.5 4.2Z"/></svg>
+                    </button>
+                    <button class="act" aria-label="Share">
+                      <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 15.5V3.8"/><path d="m7.8 8 4.2-4.2L16.2 8"/><path d="M5 13.5v6.7h14v-6.7"/></svg>
+                    </button>
+                  </div>
+                  <div class="reel-copy">
+                    <div class="reel-by">
+                      <img src="asset-4.jpeg" width="2048" height="1226" alt="" />
+                      <div><b>Sirah Shorts</b><span>Episode clip · 0:52</span></div>
+                    </div>
+                    <h4>Everything a caravan carried</h4>
+                    <p>Water, ledgers, letters and a borrowed horse — the load list that decided how far a trade route reached.</p>
+                    <div class="reel-tags"><span>#sirah</span><span>#history</span><span>#originals</span></div>
+                  </div>
+                </article>
+
+              </div>
+
+              <!-- ───────── HOME ───────── -->
+              <div class="screen" id="screen-home" role="tabpanel" aria-label="Home" data-od-id="screen-home">
+                <div class="app-head">
+                  <div class="brand">
+                    <img src="logo.png" width="1254" height="1254" alt="UmmahReels app mark" />
+                    <b>UmmahReels</b>
+                  </div>
+                  <div class="acts">
+                    <button class="icon-btn" aria-label="Downloads">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3.5v11"/><path d="m7.5 10 4.5 4.5L16.5 10"/><path d="M5 19.5h14"/></svg>
+                    </button>
+                    <button class="icon-btn" aria-label="Your profile">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8.6" r="3.7"/><path d="M4.9 20a7.3 7.3 0 0 1 14.2 0"/></svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="hero-still">
+                  <img src="image_20261125_165136.jpg" width="1920" height="1280" alt="A tiled Moorish hall with carved stucco arches and a stone fountain, lit from one doorway" />
+                </div>
+                <div class="hero-meta">
+                  <h2>Light in the Courtyards</h2>
+                  <p class="card-sub" style="margin-top:7px;">DOCUMENTARY · 6 PARTS · NEW EPISODE FRIDAY</p>
+                  <div class="hero-cta">
+                    <button class="app-btn btn-ivory" data-od-id="home-play">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6L19 12z"/></svg>
+                      <span data-slot="play-label">Play Part 1</span>
+                    </button>
+                    <button class="app-btn btn-line">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5.5v13M5.5 12h13"/></svg>
+                      My list
+                    </button>
+                  </div>
+                </div>
+
+                <div class="sec-head"><h3>Continue watching</h3><a href="#screen-home">All</a></div>
+                <div class="rail">
+                  <div>
+                    <a class="still land" href="#screen-home"><img src="asset-2.jpeg" width="1229" height="860" alt="The Roman bridge at Córdoba lit at dusk below the Mezquita-Catedral" /></a>
+                    <p class="card-title">Qurtuba: the bridge and the mosque</p>
+                    <div class="progress"><i style="width:62%"></i></div>
+                    <p class="card-sub">28 MIN LEFT</p>
+                  </div>
+                  <div>
+                    <a class="still land" href="#screen-home"><img src="asset-6.jpeg" width="1920" height="1080" alt="A ribbon of golden film stock curling through dark particles of light" /></a>
+                    <p class="card-title">Originals: behind the reel</p>
+                    <div class="progress"><i style="width:34%"></i></div>
+                    <p class="card-sub">12 MIN LEFT</p>
+                  </div>
+                  <div>
+                    <a class="still land" href="#screen-home"><img src="asset-5.jpeg" width="600" height="337" alt="Domes and minarets in silhouette beneath a crescent moon and hanging stars" /></a>
+                    <p class="card-title">Nights of Ramadan, part 3</p>
+                    <div class="progress"><i style="width:81%"></i></div>
+                    <p class="card-sub">9 MIN LEFT</p>
+                  </div>
+                </div>
+
+                <div class="banner" data-od-id="home-banner">
+                  <img src="image_20261125_165141_1.jpg" width="2736" height="912" alt="A great mosque in silhouette across still water under a crescent moon" />
+                  <div class="badge">
+                    <b>Ramadan 1447</b>
+                    <span>Arriving February</span>
+                  </div>
+                </div>
+
+                <div class="sec-head"><h3>New this month</h3><a href="#screen-home">All</a></div>
+                <div class="rail">
+                  <div>
+                    <a class="still port" href="#screen-home"><img src="asset-3.jpeg" width="1200" height="1600" alt="Sunrise through the carved arches of a mosque courtyard" /></a>
+                    <p class="card-title">Hours of Light</p>
+                    <p class="card-sub">4 PARTS</p>
+                  </div>
+                  <div>
+                    <a class="still port" href="#screen-home"><img src="asset-8.jpeg" width="857" height="1200" alt="A crescent drawn in points of golden light above a dark sea" /></a>
+                    <p class="card-title">Night of the Crescent</p>
+                    <p class="card-sub">FILM · 74 MIN</p>
+                  </div>
+                  <div>
+                    <a class="still port" href="#screen-home"><img src="asset-1.jpeg" width="1024" height="1024" alt="A rider in white approaches a desert fortress at dusk" /></a>
+                    <p class="card-title">The Long Ride</p>
+                    <p class="card-sub">8 PARTS</p>
+                  </div>
+                </div>
+
+                <div class="upsell" data-od-id="home-upsell">
+                  <h4>Watch without interruptions</h4>
+                  <p>Premium removes every ad break and unlocks downloads for the journey.</p>
+                  <button class="app-btn btn-goldline" data-go="premium">See Premium</button>
+                </div>
+              </div>
+
+              <!-- ───────── EXPLORE ───────── -->
+              <div class="screen" id="screen-explore" role="tabpanel" aria-label="Explore" data-od-id="screen-explore">
+                <div class="app-head" style="padding-bottom:4px;">
+                  <div class="brand"><b style="font-size:22px;">Explore</b></div>
+                </div>
+                <div class="searchbar">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m16.3 16.3 4.2 4.2"/></svg>
+                  <input type="search" placeholder="Search series, reels, reciters" aria-label="Search the catalogue" />
+                </div>
+
+                <div class="chips" role="group" aria-label="Filter by collection" data-od-id="explore-chips">
+                  <button class="chip" aria-pressed="true" data-filter="all">All</button>
+                  <button class="chip" aria-pressed="false" data-filter="originals">Originals</button>
+                  <button class="chip" aria-pressed="false" data-filter="history">History</button>
+                  <button class="chip" aria-pressed="false" data-filter="ramadan">Ramadan</button>
+                  <button class="chip" aria-pressed="false" data-filter="reels">Reels</button>
+                </div>
+
+                <div class="ex-grid" data-od-id="explore-grid">
+                  <figure class="ex-tile" data-cat="originals">
+                    <img src="image_20261125_165135.jpg" width="1120" height="2240" alt="An ornate gold film strip with geometric star borders on a dark slate ground" />
+                    <figcaption><b>UmmahReels Originals</b><span>Collection · 12 titles</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="history">
+                    <img src="asset-2.jpeg" width="1229" height="860" alt="The Roman bridge at Córdoba lit at dusk below the Mezquita-Catedral" />
+                    <figcaption><b>Andalusia</b><span>History · 5 titles</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="ramadan">
+                    <img src="asset-7.jpeg" width="1500" height="1060" alt="A ring of gold light scattered across a deep emerald field" />
+                    <figcaption><b>Nights of Ramadan</b><span>Seasonal · 9 titles</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="history">
+                    <img src="image_20261125_165136.jpg" width="1920" height="1280" alt="A tiled Moorish hall with carved stucco arches and a stone fountain" />
+                    <figcaption><b>Geometry &amp; Light</b><span>Architecture · 7 titles</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="originals">
+                    <img src="asset-6.jpeg" width="1920" height="1080" alt="A ribbon of golden film stock curling through dark particles of light" />
+                    <figcaption><b>Behind the Reel</b><span>Originals · 4 titles</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="reels">
+                    <img src="asset-3.jpeg" width="1200" height="1600" alt="Sunrise through the carved arches of a mosque courtyard" />
+                    <figcaption><b>Stillness</b><span>Reels · 60 clips</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="reels">
+                    <img src="asset-1.jpeg" width="1024" height="1024" alt="A rider in white approaches a desert fortress at dusk" />
+                    <figcaption><b>Sirah Shorts</b><span>Reels · 34 clips</span></figcaption>
+                  </figure>
+                  <figure class="ex-tile" data-cat="ramadan">
+                    <img src="asset-8.jpeg" width="857" height="1200" alt="A crescent drawn in points of golden light above a dark sea" />
+                    <figcaption><b>Night of the Crescent</b><span>Film · 74 min</span></figcaption>
+                  </figure>
+                </div>
+                <p class="ex-empty">Nothing in this collection yet.</p>
+              </div>
+
+            </div><!-- /screens -->
+
+            <nav class="tabbar" role="tablist" aria-label="App sections" data-od-id="tabbar">
+              <button class="tab" role="tab" aria-selected="false" data-screen="home" aria-controls="screen-home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3.2 10.6 12 3.4l8.8 7.2"/><path d="M5.8 9.6V20.4h12.4V9.6"/></svg>
+                <span>Home</span>
+              </button>
+              <button class="tab" role="tab" aria-selected="false" data-screen="reels" aria-controls="screen-reels">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5"/><path d="M9.9 8.6v6.8L16 12z"/></svg>
+                <span>Reels</span>
+              </button>
+              <button class="tab" role="tab" aria-selected="false" data-screen="explore" aria-controls="screen-explore">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7.2"/><path d="m16.4 16.4 4.3 4.3"/></svg>
+                <span>Explore</span>
+              </button>
+              <button class="tab" role="tab" aria-selected="true" data-screen="premium" aria-controls="screen-premium">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16.8 3.9A8.6 8.6 0 1 0 20.4 15 7.1 7.1 0 0 1 16.8 3.9Z"/></svg>
+                <span>Premium</span>
+              </button>
+            </nav>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════ INSIDE THE BUILD ═══════════════ -->
+  <section class="section" data-od-id="inside">
+    <div class="container stack" style="gap:52px;">
+      <div style="max-width:620px;">
+        <p class="eyebrow">Inside the build</p>
+        <h2>Three decisions you can feel in the first ten seconds.</h2>
+      </div>
+      <div class="grid-3">
+        <div class="feature" data-od-id="feature-key">
+          <div class="feature-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="12" r="4.2"/><path d="M12.2 12H21l-2.4 3.2"/><path d="M16.6 12v2.6"/></svg>
+          </div>
+          <h3>One gold key, nothing else</h3>
+          <p>Gold is spent twice per screen at most — the chosen tier and the trial button. Everything else is ivory on graphite, so the one warm thing on the page is the one thing to tap.</p>
+        </div>
+        <div class="feature" data-od-id="feature-snap">
+          <div class="feature-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3.8v16.4"/><path d="m8.2 7.6 3.8-3.8 3.8 3.8"/><path d="m8.2 16.4 3.8 3.8 3.8-3.8"/></svg>
+          </div>
+          <h3>Reels that land, not drift</h3>
+          <p>The feed uses mandatory vertical scroll-snap with a hard stop, so a flick always settles on one whole story instead of parking between two.</p>
+        </div>
+        <div class="feature" data-od-id="feature-frame">
+          <div class="feature-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="18" height="12" rx="2.2"/><path d="M3 10h18M3 14h18"/><path d="M7.5 6v12M16.5 6v12"/></svg>
+          </div>
+          <h3>Every still keeps its frame</h3>
+          <p>Posters run at their own aspect ratio and reels are letterboxed on emerald-black. A 3:1 crescent and a 3:4 courtyard share a row without either one being cropped.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pagefoot" data-od-id="footer">
+  <div class="container row-between">
+    <span>© UmmahReels · 2026</span>
+    <span class="meta" style="max-width:54ch; text-align:right; text-wrap:balance;">
+      Prototype. Artwork supplied with the project; titles, durations and pricing are sample values for layout review.
+    </span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var KEY = 'ummahreels.tab';
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  var screens = {
+    home: document.getElementById('screen-home'),
+    reels: document.getElementById('screen-reels'),
+    explore: document.getElementById('screen-explore'),
+    premium: document.getElementById('screen-premium')
+  };
+
+  function show(name) {
+    if (!screens[name]) { name = 'premium'; }
+    tabs.forEach(function (t) {
+      t.setAttribute('aria-selected', String(t.dataset.screen === name));
+    });
+    Object.keys(screens).forEach(function (k) {
+      screens[k].classList.toggle('is-active', k === name);
+    });
+    try { localStorage.setItem(KEY, name); } catch (e) {}
+  }
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { show(t.dataset.screen); });
+  });
+  document.querySelectorAll('[data-go]').forEach(function (b) {
+    b.addEventListener('click', function () { show(b.dataset.go); });
+  });
+
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  show(saved || 'premium');
+
+  /* ── Premium: billing period + tier selection ── */
+  var segs = Array.prototype.slice.call(document.querySelectorAll('.seg'));
+  var tiers = Array.prototype.slice.call(document.querySelectorAll('.tier'));
+  var afterLine = document.querySelector('[data-slot="after"]');
+  var period = 'yearly';
+
+  var SAVINGS = { single: 'Save $21.89', family: 'Save $35.89' };
+
+  function render() {
+    var p = period === 'yearly' ? 'y' : 'm';
+    tiers.forEach(function (tier) {
+      tier.querySelector('[data-slot="price"]').textContent = tier.dataset[p + 'Price'];
+      tier.querySelector('[data-slot="per"]').textContent = tier.dataset[p + 'Per'];
+      var save = tier.querySelector('[data-slot="save"]');
+      if (period === 'yearly') {
+        save.textContent = SAVINGS[tier.dataset.tier];
+        save.style.display = 'inline-block';
+      } else {
+        save.style.display = 'none';
+      }
+      if (tier.getAttribute('aria-pressed') === 'true') {
+        afterLine.textContent = tier.dataset[p + 'After'] + ' · cancel anytime';
+      }
+    });
+    segs.forEach(function (s) {
+      s.setAttribute('aria-selected', String(s.dataset.period === period));
+    });
+  }
+
+  segs.forEach(function (s) {
+    s.addEventListener('click', function () { period = s.dataset.period; render(); });
+  });
+  tiers.forEach(function (tier) {
+    tier.addEventListener('click', function () {
+      tiers.forEach(function (o) { o.setAttribute('aria-pressed', String(o === tier)); });
+      render();
+    });
+  });
+  render();
+
+  /* ── Reels: like / save toggles, progress follows the scroll ── */
+  document.querySelectorAll('.act[aria-pressed]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+    });
+  });
+
+  var reelFeed = screens.reels;
+  var reelEls = Array.prototype.slice.call(reelFeed.querySelectorAll('.reel'));
+  reelFeed.addEventListener('scroll', function () {
+    var i = Math.round(reelFeed.scrollTop / reelFeed.clientHeight);
+    reelEls.forEach(function (reel, n) {
+      reel.querySelectorAll('.reel-seg i').forEach(function (seg, k) {
+        seg.classList.toggle('on', k === i);
+      });
+    });
+  }, { passive: true });
+
+  /* ── Home: play / pause the featured title ── */
+  var playBtn = document.querySelector('[data-od-id="home-play"]');
+  var playLabel = playBtn.querySelector('[data-slot="play-label"]');
+  var playing = false;
+  playBtn.addEventListener('click', function () {
+    playing = !playing;
+    playLabel.textContent = playing ? 'Pause · Part 1' : 'Play Part 1';
+    playBtn.querySelector('svg').innerHTML = playing
+      ? '<path d="M8.5 5h2.6v14H8.5zM12.9 5h2.6v14h-2.6z"/>'
+      : '<path d="M8 5.2v13.6L19 12z"/>';
+  });
+
+  /* ── Explore: collection filter ── */
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
+  var tiles = Array.prototype.slice.call(document.querySelectorAll('.ex-tile'));
+  var empty = document.querySelector('.ex-empty');
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', String(c === chip)); });
+      var f = chip.dataset.filter;
+      var shown = 0;
+      tiles.forEach(function (tile) {
+        var on = (f === 'all' || tile.dataset.cat === f);
+        tile.style.display = on ? '' : 'none';
+        if (on) { shown++; }
+      });
+      empty.style.display = shown ? 'none' : 'block';
+    });
+  });
+})();
+</script>
+</body>
+</html>

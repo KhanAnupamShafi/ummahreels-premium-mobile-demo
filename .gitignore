@@ -1,0 +1,11 @@
+# Unused design screenshots
+image.png
+image-1.png
+image-2.png
+image-3.png
+# Design-tool notes (not part of the site)
+DESIGN-HANDOFF.md
+DESIGN-MANIFEST.json
+brand-spec.md
+.vercel
+.DS_Store
