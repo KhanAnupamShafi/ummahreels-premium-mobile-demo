@@ -46,6 +46,7 @@
   --radius:14px; --radius-card:14px; --radius-btn:12px; --radius-input:12px;
   --border-w:1px; --shadow-a:0.34; --card-gap:11px; --pad:18px; --icon:23px;
   --nav-h:84px; --nav-label:block;
+  --text-gap:10px; /* space between an image and the text under it */
 }
 
 *,*::before,*::after{box-sizing:border-box;}
@@ -230,9 +231,10 @@ dialog::backdrop{background:rgba(0,0,0,.6);}
   transition:background .25s ease, color .25s ease;
 }
 .phone h1,.phone h2,.phone h3,.phone h4{
-  font-family:var(--font-head); font-weight:var(--w-head); margin:0;
+  font-family:var(--font-head); font-weight:var(--w-head);
   letter-spacing:calc(var(--ls) - 0.012em); line-height:1.16;}
-.phone p{margin:0;}
+/* zero-specificity reset: component rules like .c-title{margin-top} must win */
+:where(.phone) :where(h1,h2,h3,h4,p){margin:0;}
 .phone button, .phone input{font-family:inherit; letter-spacing:inherit;}
 .phone a{color:inherit; text-decoration:none;}
 
@@ -336,13 +338,13 @@ dialog::backdrop{background:rgba(0,0,0,.6);}
   border:1px solid color-mix(in srgb, var(--foreground) 26%, transparent);
   backdrop-filter:blur(6px);}
 .c-play svg{width:12px; height:12px;}
-.c-title{margin-top:9px; font-size:calc(13px * var(--fs)); line-height:1.3;
+.c-title{margin-top:var(--text-gap); font-size:calc(13px * var(--fs)); line-height:1.3;
   min-height:calc(2 * 1.3 * 13px * var(--fs));
   display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
 .c-bar{height:3px; border-radius:999px; background:var(--elevated);
   margin-top:8px; overflow:hidden;}
 .c-bar i{display:block; height:100%; background:var(--primary); border-radius:999px;}
-.c-sub{margin-top:5px; font-family:var(--font-mono); font-size:calc(9.5px * var(--fs));
+.c-sub{margin-top:calc(var(--text-gap) * 0.5); font-family:var(--font-mono); font-size:calc(9.5px * var(--fs));
   letter-spacing:0.05em; color:var(--muted-foreground); text-transform:uppercase;}
 
 .btn{display:inline-flex; align-items:center; justify-content:center; gap:7px;
@@ -392,8 +394,8 @@ dialog::backdrop{background:rgba(0,0,0,.6);}
   border:var(--border-w) solid var(--border);
   box-shadow:0 22px 44px -26px rgba(0,0,0,var(--shadow-a));}
 .hero img{width:100%; height:auto;}
-.hero-body{padding:13px var(--pad) 0;}
-.csub{margin-top:2px; font-family:var(--font-mono); font-size:calc(9.5px * var(--fs));
+.hero-body{padding:calc(var(--text-gap) + 4px) var(--pad) 0;}
+.csub{margin-top:calc(var(--text-gap) * 0.3); font-family:var(--font-mono); font-size:calc(9.5px * var(--fs));
   letter-spacing:0.05em; color:var(--muted-foreground); text-transform:uppercase;}
 .bar{height:3px; border-radius:999px; background:var(--elevated); margin-top:7px; overflow:hidden;}
 .bar i{display:block; height:100%; background:var(--primary); border-radius:999px;}
@@ -563,7 +565,7 @@ dialog::backdrop{background:rgba(0,0,0,.6);}
 .who-card{flex:0 0 auto; width:96px; text-align:center;}
 .who-card img{width:64px; height:64px; border-radius:50%; object-fit:cover; margin:0 auto;
   border:2px solid var(--border);}
-.who-card b{display:block; margin-top:8px; font-size:calc(12px * var(--fs)); font-weight:600;}
+.who-card b{display:block; margin-top:calc(var(--text-gap) - 1px); font-size:calc(12px * var(--fs)); font-weight:600;}
 .who-card small{display:block; font-family:var(--font-mono); font-size:calc(9px * var(--fs));
   color:var(--muted-foreground); letter-spacing:0.05em;}
 .who-card:hover img{border-color:var(--primary);}
@@ -707,7 +709,7 @@ dialog::backdrop{background:rgba(0,0,0,.6);}
   background:var(--muted-foreground); opacity:.5;}
 .sheet-img{border-radius:var(--radius-card); overflow:hidden; border:var(--border-w) solid var(--border);}
 .sheet-img img{width:100%; height:auto;}
-.sheet-t{margin-top:13px; font-size:calc(20px * var(--fs));}
+.sheet-t{margin-top:calc(var(--text-gap) + 4px); font-size:calc(20px * var(--fs));}
 .sheet .csub{margin-top:4px;}
 
 /* empty state */
@@ -1219,7 +1221,7 @@ var PRESETS = {
 };
 
 var BASE_TYPE = { head:'iowan', body:'system', fs:1, wh:600, wb:400, ls:0 };
-var BASE_APPR = { radius:14, rcard:14, rbtn:12, rinput:12, bw:1, shadow:0.34, gap:11, density:'cozy', icon:23 };
+var BASE_APPR = { radius:14, rcard:14, rbtn:12, rinput:12, bw:1, shadow:0.34, gap:11, density:'cozy', icon:23, tgap:10 };
 var BASE_NAV  = { labels:true, height:84, icons:'line' };
 
 /* ══════════ 5. state ══════════ */
@@ -1281,6 +1283,7 @@ function apply() {
   s.setProperty('--card-gap', a.gap + 'px');
   s.setProperty('--pad', DENSITY[a.density] + 'px');
   s.setProperty('--icon', a.icon + 'px');
+  s.setProperty('--text-gap', a.tgap + 'px');
   s.setProperty('--nav-h', n.height + 'px');
   s.setProperty('--nav-label', n.labels ? 'block' : 'none');
   phone.setAttribute('data-icons', n.icons);
@@ -1389,6 +1392,7 @@ function buildPanel() {
   al.appendChild(rangeRow('Card spacing', 4, 22, 1, function () { return state.appr.gap; }, function (v) { state.appr.gap = v; }, function (v) { return v + 'px'; }));
   al.appendChild(selectRow('Content density', [['compact','Compact'],['cozy','Cozy'],['comfortable','Comfortable']], function () { return state.appr.density; }, function (v) { state.appr.density = v; }));
   al.appendChild(rangeRow('Icon size', 18, 30, 1, function () { return state.appr.icon; }, function (v) { state.appr.icon = v; }, function (v) { return v + 'px'; }));
+  al.appendChild(rangeRow('Text spacing', 2, 22, 1, function () { return state.appr.tgap; }, function (v) { state.appr.tgap = v; }, function (v) { return v + 'px'; }));
 
   var nl = $('#navList');
   nl.appendChild(colorRow('nav-bg', 'Navigation background'));
@@ -1938,7 +1942,13 @@ try {
   if (raw) {
     var o = JSON.parse(raw);
     if (o && o.t && o.t.colors) {
-      state = Object.assign(defaults(o.t.preset && PRESETS[o.t.preset] ? o.t.preset : 'default', o.t.mode), o.t);
+      /* merge group by group, so tokens added after a theme was saved keep their defaults */
+      var d = defaults(o.t.preset && PRESETS[o.t.preset] ? o.t.preset : 'default', o.t.mode === 'light' ? 'light' : (o.t.mode === 'dark' ? 'dark' : null));
+      d.colors = Object.assign(d.colors, o.t.colors);
+      d.type = Object.assign(d.type, o.t.type || {});
+      d.appr = Object.assign(d.appr, o.t.appr || {});
+      d.nav  = Object.assign(d.nav,  o.t.nav  || {});
+      state = d;
     }
     if (o && o.screen) screen = o.screen;
   }
